@@ -7,9 +7,13 @@ struct Tensor4D {
     unsigned int shape[4];
     T *data;
 
-    Tensor4D(unsigned int const shape_[4], T const *data_) {
+    Tensor4D(unsigned int const (&shape_)[4], T *data_) {
         unsigned int size = 1;
         // TODO: 填入正确的 shape 并计算 size
+        for (int i = 0; i < 4; ++i) {
+            shape[i] = shape_[i];
+            size *= shape_[i];
+        }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -28,6 +32,31 @@ struct Tensor4D {
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
         // TODO: 实现单向广播的加法
+        // 遍历this的所有元素
+        for (unsigned int i = 0; i < shape[0]; ++i) {
+            unsigned int i_other = (others.shape[0] == 1) ? 0 : i;
+
+            for (unsigned int j = 0; j < shape[1]; ++j) {
+                unsigned int j_other = (others.shape[1] == 1) ? 0 : j;
+
+                for (unsigned int k = 0; k < shape[2]; ++k) {
+                    unsigned int k_other = (others.shape[2] == 1) ? 0 : k;
+
+                    for (unsigned int l = 0; l < shape[3]; ++l) {
+                        unsigned int l_other = (others.shape[3] == 1) ? 0 : l;
+
+                        // 计算this中的索引
+                        unsigned int this_idx = ((i * shape[1] + j) * shape[2] + k) * shape[3] + l;
+
+                        // 计算others中的索引
+                        unsigned int other_idx = ((i_other * others.shape[1] + j_other) * others.shape[2] + k_other) * others.shape[3] + l_other;
+
+                        // 执行加法
+                        data[this_idx] += others.data[other_idx];
+                    }
+                }
+            }
+        }
         return *this;
     }
 };
